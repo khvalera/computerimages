@@ -1,0 +1,201 @@
+# English translations for PACKAGE package.
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-31 16:09+0300\n"
+"PO-Revision-Date: 2025-07-31 16:09+0300\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: front/image.form.php:35
+msgid "No permission to delete files"
+msgstr "No permission to delete files"
+
+#: front/image.form.php:39
+msgid "Invalid CSRF token."
+msgstr "Invalid CSRF token."
+
+#: front/image.form.php:55
+msgid "You do not have access to upload the images."
+msgstr "You do not have access to upload the images."
+
+#: front/image.form.php:73
+msgid "Uploading files"
+msgstr "Uploading files"
+
+#: front/image.form.php:91
+msgid "Select Image (only JPG, PNG, GIF are allowed)"
+msgstr "Select Image (only JPG, PNG, GIF are allowed)"
+
+#: front/image.form.php:97 inc/profile.class.php:72
+msgid "Upload"
+msgstr "Upload"
+
+#: front/image.view.php:14
+msgid "You do not have access to view images."
+msgstr "You do not have access to view images."
+
+#: front/image.view.php:32 setup.php:23
+msgid "Computer Images"
+msgstr "Computer Images"
+
+#: front/image.view.php:38
+msgid "No images uploaded for this computer yet."
+msgstr "No images uploaded for this computer yet."
+
+#: front/image.view.php:43
+msgid "Image"
+msgstr "Image"
+
+#: front/image.view.php:44
+msgid "Filename"
+msgstr "Filename"
+
+#: front/image.view.php:45
+msgid "Upload Date"
+msgstr "Upload Date"
+
+#: front/image.view.php:46
+msgid "Uploaded By"
+msgstr "Uploaded By"
+
+#: front/image.view.php:47
+msgid "Actions"
+msgstr "Actions"
+
+#: front/image.view.php:69
+msgid "Are you sure you want to delete this image?"
+msgstr "Are you sure you want to delete this image?"
+
+#: front/image.view.php:69 inc/profile.class.php:73
+msgid "Delete"
+msgstr "Delete"
+
+#: setup.php:13 inc/profile.class.php:5 inc/computerimages.class.php:13
+#: hook.php:13
+msgid "Direct access is not allowed"
+msgstr "Direct access is not allowed"
+
+#: setup.php:61 setup.php:123
+msgid "Failed to create image directory: "
+msgstr "Failed to create image directory: "
+
+#: setup.php:66 setup.php:129
+#, php-format
+msgid "The \"%s\" image directory is not writable"
+msgstr "The \"%s\" image directory is not writable"
+
+#: setup.php:116
+msgid "Failed to create table glpi_plugin_computerimages_images. DB Error: "
+msgstr "Failed to create table glpi_plugin_computerimages_images. DB Error: "
+
+#: setup.php:188
+#, php-format
+msgid "Archive creation \"%s\" completed"
+msgstr "Archive creation \"%s\" completed"
+
+#: setup.php:195
+msgid "Table glpi_plugin_computerimages_images dropped successfully."
+msgstr "Table glpi_plugin_computerimages_images dropped successfully."
+
+#: setup.php:197
+msgid "Failed to drop table glpi_plugin_computerimages_images. DB Error: "
+msgstr "Failed to drop table glpi_plugin_computerimages_images. DB Error: "
+
+#: setup.php:210
+msgid "Pictures directory deleted successfully: "
+msgstr "Pictures directory deleted successfully: "
+
+#: setup.php:212
+msgid "Failed to delete pictures directory: "
+msgstr "Failed to delete pictures directory: "
+
+#: inc/profile.class.php:15 inc/profile.class.php:47
+msgid "Computer images"
+msgstr "Computer images"
+
+#: inc/profile.class.php:71
+msgid "View"
+msgstr "View"
+
+#: inc/profile.class.php:74
+msgid "Access rights"
+msgstr "Access rights"
+
+#: inc/computerimages.class.php:103 inc/computerimages.class.php:243
+msgid "Invalid computer ID."
+msgstr "Invalid computer ID."
+
+#: inc/computerimages.class.php:107 inc/computerimages.class.php:183
+msgid "You don't have permission to perform this action."
+msgstr "You don't have permission to perform this action."
+
+#: inc/computerimages.class.php:111
+msgid "No file uploaded or upload error."
+msgstr "No file uploaded or upload error."
+
+#: inc/computerimages.class.php:116
+msgid "Invalid file type. Only JPG, PNG, GIF are allowed."
+msgstr "Invalid file type. Only JPG, PNG, GIF are allowed."
+
+#: inc/computerimages.class.php:129
+msgid "Image upload directory cannot be created."
+msgstr "Image upload directory cannot be created."
+
+#: inc/computerimages.class.php:133
+msgid "Image upload directory is not writable."
+msgstr "Image upload directory is not writable."
+
+#: inc/computerimages.class.php:158
+msgid "Image uploaded successfully."
+msgstr "Image uploaded successfully."
+
+#: inc/computerimages.class.php:163
+msgid "Failed to save image information."
+msgstr "Failed to save image information."
+
+#: inc/computerimages.class.php:166
+msgid "Failed to move uploaded file. Check directory permissions."
+msgstr "Failed to move uploaded file. Check directory permissions."
+
+#: inc/computerimages.class.php:179
+msgid "Invalid image ID."
+msgstr "Invalid image ID."
+
+#: inc/computerimages.class.php:188
+msgid "Image not found."
+msgstr "Image not found."
+
+#: inc/computerimages.class.php:199
+msgid "Image deleted successfully."
+msgstr "Image deleted successfully."
+
+#: inc/computerimages.class.php:201
+msgid "Failed to delete image file."
+msgstr "Failed to delete image file."
+
+#: inc/computerimages.class.php:204
+msgid "Image record deleted, file not found."
+msgstr "Image record deleted, file not found."
+
+#: inc/computerimages.class.php:207
+msgid "Failed to delete image information."
+msgstr "Failed to delete image information."
+
+#: inc/computerimages.class.php:226
+msgid "Images"
+msgstr "Images"
+
+#: inc/computerimages.class.php:249
+msgid "You don't have permission to view this."
+msgstr "You don't have permission to view this."

@@ -1,0 +1,207 @@
+# Ukrainian translations for PACKAGE package
+# Переклад українською для пакету PACKAGE.
+# Copyright (C) 2025 THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Automatically generated, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-31 16:08+0300\n"
+"PO-Revision-Date: 2025-07-31 13:30+0300\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: none\n"
+"Language: uk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+
+#: front/image.form.php:35
+msgid "No permission to delete files"
+msgstr "Немає дозволу на видалення файлів"
+
+#: front/image.form.php:39
+msgid "Invalid CSRF token."
+msgstr "Недійсний токен CSRF."
+
+#: front/image.form.php:55
+msgid "You do not have access to upload the images."
+msgstr "У вас немає доступу для завантаження зображень."
+
+#: front/image.form.php:73
+msgid "Uploading files"
+msgstr "Завантаження файлів"
+
+#: front/image.form.php:91
+msgid "Select Image (only JPG, PNG, GIF are allowed)"
+msgstr "Виберіть зображення (дозволені лише JPG, PNG, GIF)"
+
+#: front/image.form.php:97 inc/profile.class.php:72
+msgid "Upload"
+msgstr "Завантажити"
+
+#: front/image.view.php:14
+msgid "You do not have access to view images."
+msgstr "Ви не маєте доступу для перегляду зображень."
+
+#: front/image.view.php:32 setup.php:23
+msgid "Computer Images"
+msgstr "Зображення комп'ютера"
+
+#: front/image.view.php:38
+msgid "No images uploaded for this computer yet."
+msgstr "Для цього комп’ютера ще не завантажено жодних зображень."
+
+#: front/image.view.php:43
+msgid "Image"
+msgstr "Зображення"
+
+#: front/image.view.php:44
+msgid "Filename"
+msgstr "Ім'я файлу"
+
+#: front/image.view.php:45
+msgid "Upload Date"
+msgstr "Дата завантаження"
+
+#: front/image.view.php:46
+msgid "Uploaded By"
+msgstr "Завантажено користувачем"
+
+#: front/image.view.php:47
+msgid "Actions"
+msgstr "Дії"
+
+#: front/image.view.php:69
+msgid "Are you sure you want to delete this image?"
+msgstr "Ви впевнені, що хочете видалити це зображення?"
+
+#: front/image.view.php:69 inc/profile.class.php:73
+msgid "Delete"
+msgstr "Видалити"
+
+#: setup.php:13 inc/profile.class.php:5 inc/computerimages.class.php:13
+#: hook.php:13
+msgid "Direct access is not allowed"
+msgstr "Прямий доступ заборонено"
+
+#: setup.php:61 setup.php:123
+msgid "Failed to create image directory: "
+msgstr "Не вдалося створити каталог зображень: "
+
+#: setup.php:66 setup.php:129
+#, php-format
+msgid "The \"%s\" image directory is not writable"
+msgstr "Каталог зображень \"%s\" недоступний для запису"
+
+#: setup.php:116
+msgid "Failed to create table glpi_plugin_computerimages_images. DB Error: "
+msgstr ""
+"Не вдалося створити таблицю glpi_plugin_computerimages_images. Помилка бази "
+"даних: "
+
+#: setup.php:188
+#, php-format
+msgid "Archive creation \"%s\" completed"
+msgstr "Створення архіву \"%s\" завершено"
+
+#: setup.php:195
+msgid "Table glpi_plugin_computerimages_images dropped successfully."
+msgstr "Таблицю glpi_plugin_computerimages_images успішно видалено."
+
+#: setup.php:197
+msgid "Failed to drop table glpi_plugin_computerimages_images. DB Error: "
+msgstr ""
+"Не вдалося видалити таблицю glpi_plugin_computerimages_images. Помилка бази "
+"даних: "
+
+#: setup.php:210
+msgid "Pictures directory deleted successfully: "
+msgstr "Каталог із зображеннями успішно видалено: "
+
+#: setup.php:212
+msgid "Failed to delete pictures directory: "
+msgstr "Не вдалося видалити каталог зображень: "
+
+#: inc/profile.class.php:15 inc/profile.class.php:47
+msgid "Computer images"
+msgstr "Зображення комп'ютера"
+
+#: inc/profile.class.php:71
+msgid "View"
+msgstr "Перегляд"
+
+#: inc/profile.class.php:74
+msgid "Access rights"
+msgstr "Права доступу"
+
+#: inc/computerimages.class.php:103 inc/computerimages.class.php:243
+msgid "Invalid computer ID."
+msgstr "Недійсний ідентифікатор комп'ютера."
+
+#: inc/computerimages.class.php:107 inc/computerimages.class.php:183
+msgid "You don't have permission to perform this action."
+msgstr "У вас немає дозволу на виконання цієї дії."
+
+#: inc/computerimages.class.php:111
+msgid "No file uploaded or upload error."
+msgstr "Файл не завантажено або сталася помилка завантаження."
+
+#: inc/computerimages.class.php:116
+msgid "Invalid file type. Only JPG, PNG, GIF are allowed."
+msgstr "Недійсний тип файлу. Дозволені лише JPG, PNG, GIF."
+
+#: inc/computerimages.class.php:129
+msgid "Image upload directory cannot be created."
+msgstr "Не вдалося створити каталог для завантаження зображень."
+
+#: inc/computerimages.class.php:133
+msgid "Image upload directory is not writable."
+msgstr "Директорія для завантаження зображень недоступна для запису."
+
+#: inc/computerimages.class.php:158
+msgid "Image uploaded successfully."
+msgstr "Зображення успішно завантажено."
+
+#: inc/computerimages.class.php:163
+msgid "Failed to save image information."
+msgstr "Не вдалося зберегти інформацію про зображення."
+
+#: inc/computerimages.class.php:166
+msgid "Failed to move uploaded file. Check directory permissions."
+msgstr "Не вдалося перемістити завантажений файл. Перевірте дозволи каталогу."
+
+#: inc/computerimages.class.php:179
+msgid "Invalid image ID."
+msgstr "Недійсний ідентифікатор зображення."
+
+#: inc/computerimages.class.php:188
+msgid "Image not found."
+msgstr "Зображення не знайдено."
+
+#: inc/computerimages.class.php:199
+msgid "Image deleted successfully."
+msgstr "Зображення успішно видалено."
+
+#: inc/computerimages.class.php:201
+msgid "Failed to delete image file."
+msgstr "Не вдалося видалити файл зображення."
+
+#: inc/computerimages.class.php:204
+msgid "Image record deleted, file not found."
+msgstr "Запис зображення видалено, файл не знайдено."
+
+#: inc/computerimages.class.php:207
+msgid "Failed to delete image information."
+msgstr "Не вдалося видалити інформацію про зображення."
+
+#: inc/computerimages.class.php:226
+msgid "Images"
+msgstr "Зображення"
+
+#: inc/computerimages.class.php:249
+msgid "You don't have permission to view this."
+msgstr "У вас немає дозволу на перегляд сторінки."
