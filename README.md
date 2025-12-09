@@ -10,3 +10,14 @@ Plugin features:
 2. Viewing uploaded images in the form of a gallery.
    
 3. Granting individual access rights to users to view, download and delete files.
+   
+4. Automatic creation of archive of table glpi_plugin_computerimages_images and media files
+
+## Screenshots
+
+### Image gallery tab
+![Computer Images Screenshot 1](images/computerimages1.png)
+
+### Image management view
+![Computer Images Screenshot 2](images/computerimages2.png)
+

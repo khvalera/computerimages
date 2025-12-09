@@ -1,7 +1,7 @@
 <?php
 /**
  * Hook file for Computer Images plugin.
- * Adapted for GLPI 10.0.x.
+ * Adapted for GLPI 11.0.x.
  *
  * @package   Computer Images
  * @copyright 2024 khvalera

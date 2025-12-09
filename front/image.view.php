@@ -61,9 +61,9 @@ if (count($images) === 0) {
         echo '<tr>';
         // Clicking on the image opens it in a new tab.
         echo '<td><a href="' . $image_display_url . '" target="_blank"><img src="' . $image_display_url . '" width="200" class="img-thumbnail"></a></td>';
-        echo '<td>' . Html::clean($image['filename']) . '</td>';
-        echo '<td>' . Html::clean($image['upload_date']) . '</td>';
-        echo '<td>' . Html::clean($image['uploader_name']) . '</td>';
+        echo '<td>' . Html::cleanInputText($image['filename']) . '</td>';
+        echo '<td>' . Html::cleanInputText($image['upload_date']) . '</td>';
+        echo '<td>' . Html::cleanInputText($image['uploader_name']) . '</td>';
         echo '<td>';
         if (Session::haveRight('plugin_computerimages_profile', DELETE)) {
             echo '<a href="' . $delete_url . '" class="btn btn-sm btn-danger" onclick="return confirm(\'' . addslashes(__('Are you sure you want to delete this image?', 'computerimages')) . '\');">' . __('Delete', 'computerimages') . '</a>';

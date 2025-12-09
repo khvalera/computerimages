@@ -1,11 +1,10 @@
 <?php
 /**
  * Plugin setup file for Computer Images.
- * Adapted for GLPI 10.0.x and older CSRF method.
+ * Adapted for GLPI 10-11.
  *
  * @package   Computer Images
- * @copyright 2024 khvalera
- * @license   http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL v3
+ * @license   GPLv3
  */
 
 // Don't allow direct access
@@ -22,20 +21,24 @@ function plugin_version_computerimages() {
     return [
         'name'           => __('Computer Images', 'computerimages'),
         'version'        => '1.0.0',
-        'author'         => 'khvalera',
+        'author'         => 'Your Name',
         'license'        => 'GPLv3',
-        'homepage'       => 'https://github.com/khvalera/computerimages',
+        'homepage'       => 'https://example.com',
+
+        'minGlpiVersion' => '10.00',
+        'maxGlpiVersion' => '11.99',
+
         'requirements'   => [
             'glpi' => [
-                'min' => '9.3',
-                'max' => '10.0.99',
-            ]
+                'min' => '10.00',
+                'max' => '11.99',
+                'plugin' => [],
+            ],
         ],
-        'description'      => 'Allows uploading and displaying images for Computer assets.',
-        'long_description' => 'This plugin extends GLPI functionality by adding a dedicated tab to Computer assets, enabling users to upload, view, and manage images associated with each computer. This enhances visual identification and inventory management.',
-        'displayname'      => 'Computer Images',
-        'min_glpi_version' => '9.3',
-        'max_glpi_version' => '10.0.99',
+
+        'displayname'      => __('Computer Images', 'computerimages'),
+        'description'      => __('Allows uploading and displaying images for Computer assets.', 'computerimages'),
+        'long_description' => __('This plugin extends GLPI functionality by adding a dedicated tab to Computer assets, enabling users to upload, view, and manage images associated with each computer.', 'computerimages'),
     ];
 }
 
@@ -54,44 +57,55 @@ function plugin_computerimages_check_prerequisites() {
  * @return bool
  */
 function plugin_computerimages_check_config() {
-    // Check for write permissions in the pictures directory
+
     $pictures_dir = GLPI_VAR_DIR . '/_plugins/computerimages/pictures';
+
     if (!is_dir($pictures_dir)) {
         if (!mkdir($pictures_dir, 0775, true)) {
-            Session::addMessageAfterRedirect(__("Failed to create image directory: ", 'computerimages') . $pictures_dir, false, ERROR);
+            Session::addMessageAfterRedirect(
+                __("Failed to create image directory: ", 'computerimages') . $pictures_dir,
+                                             false,
+                                             ERROR
+            );
             return false;
         }
     }
+
     if (!is_writable($pictures_dir)) {
-        Session::addMessageAfterRedirect(sprintf(__('The "%s" image directory is not writable', 'computerimages'), $pictures_dir), false, ERROR);
+        Session::addMessageAfterRedirect(
+            sprintf(__('The "%s" image directory is not writable', 'computerimages'), $pictures_dir),
+                                         false,
+                                         ERROR
+        );
         return false;
     }
+
     return true;
 }
 
 /**
  * Plugin initialization function.
- * This function is called when the plugin is loaded by GLPI.
- * It registers plugin classes and declares CSRF compliance (using old method).
  *
  * @return void
  */
 function plugin_init_computerimages() {
     global $PLUGIN_HOOKS;
 
-    // Registering a class with addtabon (for GLPI 9.3.x)
-    Plugin::registerClass(PluginComputerimagesComputerimages::class, [ 'addtabon' => ['Computer']]);
-    // CSRF protection (OLD METHOD for GLPI < 9.4)
-    $PLUGIN_HOOKS['csrf_compliant']['computerimages'] = true;
+    Plugin::registerClass(
+        PluginComputerimagesComputerimages::class,
+        [ 'addtabon' => ['Computer'] ]
+    );
 
-   // Профілі користувачів
-   Plugin::registerClass('PluginComputerimagesProfile', ['addtabon' => ['Profile']]);
+    Plugin::registerClass(
+        'PluginComputerimagesProfile',
+        [ 'addtabon' => ['Profile'] ]
+    );
+
+    $PLUGIN_HOOKS['csrf_compliant']['computerimages'] = true;
 }
 
 /**
  * Plugin installation function.
- * Creates the glpi_plugin_computerimages_images table and the pictures directory.
- * NOTE: This function is typically in hook.php. Placing it here is non-standard, but requested.
  *
  * @return bool
  */
@@ -109,24 +123,36 @@ function plugin_computerimages_install() {
         `users_id_upload` INT UNSIGNED NOT NULL,
         PRIMARY KEY (`id`),
         INDEX `computers_id` (`computers_id`)
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
-    if ($DB->query($query)) {
-    } else {
-        Session::addMessageAfterRedirect(__("Failed to create table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(), false, ERROR);
+    if (!$DB->query($query)) {
+        Session::addMessageAfterRedirect(
+            __("Failed to create table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(),
+                                         false,
+                                         ERROR
+        );
         return false;
     }
 
+    // Create pictures dir
     $pictures_dir = GLPI_PLUGIN_DOC_DIR . '/computerimages/pictures';
     if (!is_dir($pictures_dir)) {
         if (!mkdir($pictures_dir, 0775, true)) {
-            Session::addMessageAfterRedirect(__("Failed to create image directory: ", 'computerimages') . $pictures_dir, false, ERROR);
+            Session::addMessageAfterRedirect(
+                __("Failed to create image directory: ", 'computerimages') . $pictures_dir,
+                                             false,
+                                             ERROR
+            );
             return false;
         }
     }
 
     if (!is_writable($pictures_dir)) {
-        Session::addMessageAfterRedirect(sprintf(__('The "%s" image directory is not writable' , 'computerimages'), $pictures_dir), false, ERROR);
+        Session::addMessageAfterRedirect(
+            sprintf(__('The "%s" image directory is not writable', 'computerimages'), $pictures_dir),
+                                         false,
+                                         ERROR
+        );
         return false;
     }
 
@@ -138,8 +164,6 @@ function plugin_computerimages_install() {
 
 /**
  * Plugin uninstallation function.
- * Drops the glpi_plugin_computerimages_images table and optionally removes the pictures directory.
- * NOTE: This function is typically in hook.php. Placing it here is non-standard, but requested.
  *
  * @return bool
  */
@@ -152,7 +176,7 @@ function plugin_computerimages_uninstall() {
     $archive_file = $archive_dir . "/computerimages_backup_{$timestamp}.zip";
 
     if (!file_exists($archive_dir)) {
-       mkdir($archive_dir, 0755, true);
+        mkdir($archive_dir, 0755, true);
     }
 
     $export_sql = $archive_dir . "/computerimages_table_{$timestamp}.sql";
@@ -160,43 +184,57 @@ function plugin_computerimages_uninstall() {
 
     $fh = fopen($export_sql, 'w');
     foreach ($iterator as $row) {
-       $values = array_map([$DB, 'escape'], array_values($row));
-       $fields = implode('`,`', array_keys($row));
-       $vals = implode("','", $values);
-       fwrite($fh, "INSERT INTO `glpi_plugin_computerimages_images` (`$fields`) VALUES ('$vals');\n");
+        $values = array_map([$DB, 'escape'], array_values($row));
+        $fields = implode('`,`', array_keys($row));
+        $vals = implode("','", $values);
+        fwrite($fh, "INSERT INTO `glpi_plugin_computerimages_images` (`$fields`) VALUES ('$vals');\n");
     }
     fclose($fh);
 
     $zip = new ZipArchive();
     if ($zip->open($archive_file, ZipArchive::CREATE) === true) {
-       $zip->addFile($export_sql, basename($export_sql));
+        $zip->addFile($export_sql, basename($export_sql));
 
-       if (is_dir($pictures_dir)) {
-          $files = new RecursiveIteratorIterator(
-             new RecursiveDirectoryIterator($pictures_dir, RecursiveDirectoryIterator::SKIP_DOTS),
-             RecursiveIteratorIterator::LEAVES_ONLY
-          );
+        if (is_dir($pictures_dir)) {
+            $files = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($pictures_dir, RecursiveDirectoryIterator::SKIP_DOTS),
+                                                   RecursiveIteratorIterator::LEAVES_ONLY
+            );
 
-          foreach ($files as $name => $file) {
-             $filePath = $file->getRealPath();
-             $relativePath = 'pictures/' . substr($filePath, strlen($pictures_dir) + 1);
-             $zip->addFile($filePath, $relativePath);
-          }
-       }
+            foreach ($files as $name => $file) {
+                $filePath = $file->getRealPath();
+                $relativePath = 'pictures/' . substr($filePath, strlen($pictures_dir) + 1);
+                $zip->addFile($filePath, $relativePath);
+            }
+        }
 
-       $zip->close();
-       Session::addMessageAfterRedirect(sprintf(__('Archive creation "%s" completed', 'computerimages'), $archive_file), true, INFO);
+        $zip->close();
+        Session::addMessageAfterRedirect(
+            sprintf(__('Archive creation "%s" completed', 'computerimages'), $archive_file),
+                                         true,
+                                         INFO
+        );
     }
 
     unlink($export_sql);
 
+    // Drop table
     $query = "DROP TABLE IF EXISTS `glpi_plugin_computerimages_images`;";
     if ($DB->query($query)) {
-        Session::addMessageAfterRedirect(__("Table glpi_plugin_computerimages_images dropped successfully.", 'computerimages'), true, INFO);
+        Session::addMessageAfterRedirect(
+            __("Table glpi_plugin_computerimages_images dropped successfully.", 'computerimages'),
+                                         true,
+                                         INFO
+        );
     } else {
-        Session::addMessageAfterRedirect(__("Failed to drop table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(), false, ERROR);
+        Session::addMessageAfterRedirect(
+            __("Failed to drop table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(),
+                                         false,
+                                         ERROR
+        );
     }
 
+    // Delete pictures
     $pictures_dir = GLPI_PLUGIN_DOC_DIR . '/computerimages/pictures';
     if (is_dir($pictures_dir)) {
         function deleteDir($dir) {
@@ -207,14 +245,22 @@ function plugin_computerimages_uninstall() {
             return rmdir($dir);
         }
         if (deleteDir($pictures_dir)) {
-            Session::addMessageAfterRedirect(__("Pictures directory deleted successfully: ", 'computerimages') . $pictures_dir, true, INFO);
+            Session::addMessageAfterRedirect(
+                __("Pictures directory deleted successfully: ", 'computerimages') . $pictures_dir,
+                                             true,
+                                             INFO
+            );
         } else {
-            Session::addMessageAfterRedirect(__("Failed to delete pictures directory: ", 'computerimages') . $pictures_dir, false, ERROR);
+            Session::addMessageAfterRedirect(
+                __("Failed to delete pictures directory: ", 'computerimages') . $pictures_dir,
+                                             false,
+                                             ERROR
+            );
         }
-   }
+    }
 
-   include_once Plugin::getPhpDir('computerimages').'/inc/profile.class.php';
-   PluginComputerimagesProfile::removeRights();
+    include_once Plugin::getPhpDir('computerimages').'/inc/profile.class.php';
+    PluginComputerimagesProfile::removeRights();
 
-   return true;
+    return true;
 }
