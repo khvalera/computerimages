@@ -49,18 +49,20 @@ if (count($images) === 0) {
     echo '</thead>';
     echo '<tbody>';
     foreach ($images as $image) {
-        $image_display_url = Plugin::getWebDir('computerimages') . '/front/image.send.php?id=' . $image['id'];
+        $image_id = (int)$image['id'];
+        $image_original_url = Plugin::getWebDir('computerimages') . '/front/image.send.php?id=' . $image_id;
+        $image_thumb_url    = Plugin::getWebDir('computerimages') . '/front/image.send.php?id=' . $image_id . '&thumb=1';
 
         $csrf_token = '';
         if (class_exists('Session') && method_exists('Session', 'getNewCSRFToken')) {
             $csrf_token = Session::getNewCSRFToken();
         }
 
-        $delete_url = Plugin::getWebDir('computerimages') . '/front/image.form.php?id=' . $computer_id . '&action=delete&image_id=' . $image['id'] . '&_glpi_csrf_token=' . $csrf_token . '&tab=PluginComputerimagesComputerimages';
+        $delete_url = Plugin::getWebDir('computerimages') . '/front/image.form.php?id=' . $computer_id . '&action=delete&image_id=' . $image_id . '&_glpi_csrf_token=' . $csrf_token . '&tab=PluginComputerimagesComputerimages';
 
         echo '<tr>';
-        // Clicking on the image opens it in a new tab.
-        echo '<td><a href="' . $image_display_url . '" target="_blank"><img src="' . $image_display_url . '" width="200" class="img-thumbnail"></a></td>';
+        // Thumbnail is used for fast page loading. Clicking opens the original image.
+        echo '<td><a href="' . $image_original_url . '" target="_blank" rel="noopener"><img src="' . $image_thumb_url . '" width="200" class="img-thumbnail" loading="lazy" decoding="async"></a></td>';
         echo '<td>' . Html::cleanInputText($image['filename']) . '</td>';
         echo '<td>' . Html::cleanInputText($image['upload_date']) . '</td>';
         echo '<td>' . Html::cleanInputText($image['uploader_name']) . '</td>';

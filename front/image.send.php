@@ -30,6 +30,22 @@ if ($image_id > 0) {
         // Form the full path to the image file on the server
         $image_full_path = GLPI_VAR_DIR . '/' . $filepath_db;
 
+        // If requested, try to serve the small thumbnail first.
+        // Fallback to the original image if the thumbnail does not exist yet.
+        $use_thumb = isset($_GET['thumb']) && $_GET['thumb'] == '1';
+        if ($use_thumb) {
+            $thumb_filepath_db = str_replace(
+                '_plugins/computerimages/pictures/',
+                '_plugins/computerimages/thumbs/',
+                $filepath_db
+            );
+            $thumb_full_path = GLPI_VAR_DIR . '/' . $thumb_filepath_db;
+
+            if (file_exists($thumb_full_path)) {
+                $image_full_path = $thumb_full_path;
+            }
+        }
+
         // Check if the file exists
         if (file_exists($image_full_path)) {
             // Determine the MIME type of the file
@@ -46,14 +62,16 @@ if ($image_id > 0) {
             header('Content-Description: File Transfer');
             header('Content-Type: ' . $mime_type);
             // inline for display in the browser
-            header('Content-Disposition: inline; filename="' . basename($filename_db) . '"'); 
+            header('Content-Disposition: inline; filename="' . basename($filename_db) . '"');
             header('Expires: 0');
-            header('Cache-Control: must-revalidate');
+            header('Cache-Control: private, max-age=86400');
             header('Pragma: public');
             header('Content-Length: ' . filesize($image_full_path));
 
             // Clear the output buffers and send the file
-            ob_clean();
+            if (ob_get_level()) {
+                @ob_end_clean();
+            }
             flush();
             readfile($image_full_path);
             // It is important to complete the script execution after sending the file
@@ -65,7 +83,7 @@ if ($image_id > 0) {
         }
     } else {
         // If the image is not found in the database
-        header("HTTP/10 404 Not Found");
+        header("HTTP/1.0 404 Not Found");
         echo "Image not found in database.";
     }
 } else {

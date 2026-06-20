@@ -43,6 +43,51 @@ function plugin_version_computerimages() {
 }
 
 /**
+ * Return plugin storage directories.
+ *
+ * @return array
+ */
+function plugin_computerimages_get_storage_dirs() {
+    $base_dir = defined('GLPI_VAR_DIR') ? rtrim(GLPI_VAR_DIR, '/') : rtrim(GLPI_ROOT, '/') . '/files';
+
+    return [
+        'pictures' => $base_dir . '/_plugins/computerimages/pictures',
+        'thumbs'   => $base_dir . '/_plugins/computerimages/thumbs',
+    ];
+}
+
+/**
+ * Ensure plugin storage directories exist and are writable.
+ *
+ * @return bool
+ */
+function plugin_computerimages_prepare_storage_dirs() {
+    foreach (plugin_computerimages_get_storage_dirs() as $dir) {
+        if (!is_dir($dir)) {
+            if (!mkdir($dir, 0775, true)) {
+                Session::addMessageAfterRedirect(
+                    __('Failed to create image directory: ', 'computerimages') . $dir,
+                    false,
+                    ERROR
+                );
+                return false;
+            }
+        }
+
+        if (!is_writable($dir)) {
+            Session::addMessageAfterRedirect(
+                sprintf(__('The "%s" image directory is not writable', 'computerimages'), $dir),
+                false,
+                ERROR
+            );
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/**
  * Check if plugin can be activated.
  *
  * @return bool
@@ -57,30 +102,7 @@ function plugin_computerimages_check_prerequisites() {
  * @return bool
  */
 function plugin_computerimages_check_config() {
-
-    $pictures_dir = GLPI_VAR_DIR . '/_plugins/computerimages/pictures';
-
-    if (!is_dir($pictures_dir)) {
-        if (!mkdir($pictures_dir, 0775, true)) {
-            Session::addMessageAfterRedirect(
-                __("Failed to create image directory: ", 'computerimages') . $pictures_dir,
-                                             false,
-                                             ERROR
-            );
-            return false;
-        }
-    }
-
-    if (!is_writable($pictures_dir)) {
-        Session::addMessageAfterRedirect(
-            sprintf(__('The "%s" image directory is not writable', 'computerimages'), $pictures_dir),
-                                         false,
-                                         ERROR
-        );
-        return false;
-    }
-
-    return true;
+    return plugin_computerimages_prepare_storage_dirs();
 }
 
 /**
@@ -127,32 +149,15 @@ function plugin_computerimages_install() {
 
     if (!$DB->query($query)) {
         Session::addMessageAfterRedirect(
-            __("Failed to create table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(),
-                                         false,
-                                         ERROR
+            __('Failed to create table glpi_plugin_computerimages_images. DB Error: ', 'computerimages') . $DB->error(),
+            false,
+            ERROR
         );
         return false;
     }
 
-    // Create pictures dir
-    $pictures_dir = GLPI_PLUGIN_DOC_DIR . '/computerimages/pictures';
-    if (!is_dir($pictures_dir)) {
-        if (!mkdir($pictures_dir, 0775, true)) {
-            Session::addMessageAfterRedirect(
-                __("Failed to create image directory: ", 'computerimages') . $pictures_dir,
-                                             false,
-                                             ERROR
-            );
-            return false;
-        }
-    }
-
-    if (!is_writable($pictures_dir)) {
-        Session::addMessageAfterRedirect(
-            sprintf(__('The "%s" image directory is not writable', 'computerimages'), $pictures_dir),
-                                         false,
-                                         ERROR
-        );
+    // Create pictures and thumbnails dirs
+    if (!plugin_computerimages_prepare_storage_dirs()) {
         return false;
     }
 
@@ -170,8 +175,10 @@ function plugin_computerimages_install() {
 function plugin_computerimages_uninstall() {
     global $DB;
 
-    $archive_dir = GLPI_VAR_DIR . '/_archives';
-    $pictures_dir = GLPI_VAR_DIR . '/_plugins/computerimages/pictures';
+    $base_dir = defined('GLPI_VAR_DIR') ? rtrim(GLPI_VAR_DIR, '/') : rtrim(GLPI_ROOT, '/') . '/files';
+    $archive_dir = $base_dir . '/_archives';
+    $pictures_dir = $base_dir . '/_plugins/computerimages/pictures';
+    $thumbs_dir = $base_dir . '/_plugins/computerimages/thumbs';
     $timestamp = date('Ymd_His');
     $archive_file = $archive_dir . "/computerimages_backup_{$timestamp}.zip";
 
@@ -198,7 +205,7 @@ function plugin_computerimages_uninstall() {
         if (is_dir($pictures_dir)) {
             $files = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator($pictures_dir, RecursiveDirectoryIterator::SKIP_DOTS),
-                                                   RecursiveIteratorIterator::LEAVES_ONLY
+                RecursiveIteratorIterator::LEAVES_ONLY
             );
 
             foreach ($files as $name => $file) {
@@ -211,8 +218,8 @@ function plugin_computerimages_uninstall() {
         $zip->close();
         Session::addMessageAfterRedirect(
             sprintf(__('Archive creation "%s" completed', 'computerimages'), $archive_file),
-                                         true,
-                                         INFO
+            true,
+            INFO
         );
     }
 
@@ -222,40 +229,42 @@ function plugin_computerimages_uninstall() {
     $query = "DROP TABLE IF EXISTS `glpi_plugin_computerimages_images`;";
     if ($DB->query($query)) {
         Session::addMessageAfterRedirect(
-            __("Table glpi_plugin_computerimages_images dropped successfully.", 'computerimages'),
-                                         true,
-                                         INFO
+            __('Table glpi_plugin_computerimages_images dropped successfully.', 'computerimages'),
+            true,
+            INFO
         );
     } else {
         Session::addMessageAfterRedirect(
-            __("Failed to drop table glpi_plugin_computerimages_images. DB Error: ", 'computerimages') . $DB->error(),
-                                         false,
-                                         ERROR
+            __('Failed to drop table glpi_plugin_computerimages_images. DB Error: ', 'computerimages') . $DB->error(),
+            false,
+            ERROR
         );
     }
 
-    // Delete pictures
-    $pictures_dir = GLPI_PLUGIN_DOC_DIR . '/computerimages/pictures';
-    if (is_dir($pictures_dir)) {
-        function deleteDir($dir) {
-            $files = array_diff(scandir($dir), ['.', '..']);
-            foreach ($files as $file) {
-                (is_dir("$dir/$file")) ? deleteDir("$dir/$file") : unlink("$dir/$file");
-            }
-            return rmdir($dir);
+    // Delete pictures and thumbnails
+    $deleteDir = function($dir) use (&$deleteDir) {
+        $files = array_diff(scandir($dir), ['.', '..']);
+        foreach ($files as $file) {
+            (is_dir("$dir/$file")) ? $deleteDir("$dir/$file") : unlink("$dir/$file");
         }
-        if (deleteDir($pictures_dir)) {
-            Session::addMessageAfterRedirect(
-                __("Pictures directory deleted successfully: ", 'computerimages') . $pictures_dir,
-                                             true,
-                                             INFO
-            );
-        } else {
-            Session::addMessageAfterRedirect(
-                __("Failed to delete pictures directory: ", 'computerimages') . $pictures_dir,
-                                             false,
-                                             ERROR
-            );
+        return rmdir($dir);
+    };
+
+    foreach ([$pictures_dir, $thumbs_dir] as $dir) {
+        if (is_dir($dir)) {
+            if ($deleteDir($dir)) {
+                Session::addMessageAfterRedirect(
+                    __('Directory deleted successfully: ', 'computerimages') . $dir,
+                    true,
+                    INFO
+                );
+            } else {
+                Session::addMessageAfterRedirect(
+                    __('Failed to delete directory: ', 'computerimages') . $dir,
+                    false,
+                    ERROR
+                );
+            }
         }
     }
 
