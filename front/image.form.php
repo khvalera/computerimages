@@ -7,99 +7,87 @@ if (!defined('GLPI_ROOT')) {
 
 include_once GLPI_ROOT . '/inc/includes.php';
 
-// Check access rights
 Session::checkLoginUser();
 
 $computerimage = new PluginComputerimagesComputerimages();
 
 $computer_id = 0;
 if (isset($_REQUEST['computers_id'])) {
-    $computer_id = (int) $_REQUEST['computers_id'];
+    $computer_id = (int)$_REQUEST['computers_id'];
 }
 if (isset($_REQUEST['id'])) {
-    $computer_id = (int) $_REQUEST['id'];
+    $computer_id = (int)$_REQUEST['id'];
 }
 
-$image_id = 0;
-if (isset($_REQUEST['image_id'])) {
-    $image_id = (int) $_REQUEST['image_id'];
-}
+$image_id = isset($_REQUEST['image_id']) ? (int)$_REQUEST['image_id'] : 0;
 
-global $GLPI_WEB_ROOT;
+$computer_url = $CFG_GLPI['root_doc']
+    . '/front/computer.form.php?id=' . $computer_id
+    . '&forcetab=PluginComputerimagesComputerimages$1';
 
-// Handle the delete action
-if (isset($_GET['action']) && $_GET['action'] == 'delete') {
-
-    // Check delete permissions
+// Delete an image.
+if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     if (!Session::haveRight('plugin_computerimages_profile', DELETE)) {
-        Html::displayErrorAndDie(__('No permission to delete files'));
+        Html::displayErrorAndDie('Немає прав для видалення фото.');
     }
-    // Check the CSRF token
+
     if (!Session::validateCSRF($_GET)) {
-        Html::displayErrorAndDie(__('Invalid CSRF token.'));
+        Html::displayErrorAndDie('Некоректний CSRF-токен.');
     }
 
-    $upload_result = $computerimage->deleteImage($image_id);
-    if (!$upload_result['success']) {
-        Session::addMessageAfterRedirect($upload_result['message'], false, ERROR);
-    } else {
-        Session::addMessageAfterRedirect($upload_result['message'], false, INFO);
-    }
-    Html::redirect($GLPI_WEB_ROOT . '/front/computer.form.php?id=' . $computer_id );
+    $result = $computerimage->deleteImage($image_id);
+    Session::addMessageAfterRedirect(
+        $result['message'],
+        false,
+        $result['success'] ? INFO : ERROR
+    );
+
+    Html::redirect($computer_url);
 }
 
-// File upload processing
-if (isset($_FILES['image_file'])) {
-    // Check creation (download) rights
-    if (!Session::haveRight('plugin_computerimages_profile', CREATE)) {
-       Html::displayErrorAndDie(__('You do not have access to upload the images.'));
-    }
-    // Check the CSRF token
-    //if (!Session::validateCSRF($_POST)) {
-    //    Html::displayErrorAndDie(__('Invalid CSRF token.'));
-    //}
-
-    $upload_result = $computerimage->uploadImage($computer_id, $_FILES['image_file']);
-    if (!$upload_result['success']) {
-        Session::addMessageAfterRedirect($upload_result['message'], false, ERROR);
-    } else {
-        Session::addMessageAfterRedirect($upload_result['message'], false, INFO);
-    }
-    Html::redirect($GLPI_WEB_ROOT . '/front/computer.form.php?id=' . $computer_id );
-}
+// POST actions are handled by dedicated endpoints in GLPI 11.
+// This avoids the generic *.form.php controller and duplicate CSRF validation.
 
 if (Session::haveRight('plugin_computerimages_profile', CREATE)) {
-   // Display the form
-   echo '<h2>' . __('Uploading files', 'computerimages') . '</h2>';
+    $csrf_token = Session::getNewCSRFToken();
+    $comments_supported = PluginComputerimagesComputerimages::supportsImageComments();
 
-   echo '<div class="card w-50 mt-4">';
-   echo '<div class="card-body">';
-   echo '<form method="post" action="' . Plugin::getWebDir('computerimages') . '/front/image.form.php?id=' . $computer_id . '" enctype="multipart/form-data">';
+    echo '<h2>Завантаження фото</h2>';
+    echo '<div class="card mt-4" style="max-width:760px;">';
+    echo '<div class="card-body">';
+    echo '<form method="post" action="'
+        . Plugin::getWebDir('computerimages')
+        . '/front/image.upload.php'
+        . '" enctype="multipart/form-data">';
 
-   // Computer ID
-   echo '<input type="hidden" name="computers_id" value="' . $computer_id . '">';
+    echo '<input type="hidden" name="computers_id" value="' . $computer_id . '">';
+    echo '<input type="hidden" name="_glpi_csrf_token" value="'
+        . htmlspecialchars($csrf_token, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8')
+        . '">';
 
-   // CSRF token
-   $csrf_token = '';
-   if (class_exists('Session') && method_exists('Session', 'getNewCSRFToken')) {
-       $csrf_token = Session::getNewCSRFToken();
-   }
-   echo '<input type="hidden" name="_glpi_csrf_token" value="' . $csrf_token . '">';
+    echo '<div class="mb-3">';
+    echo '<label for="image_file" class="form-label">Фото (JPG, PNG або GIF)</label>';
+    echo '<input type="file" class="form-control" name="image_file" id="image_file" accept="image/jpeg,image/png,image/gif" required>';
+    echo '</div>';
 
-   // File selection
-   echo '<div class="form-group">';
-   echo '<label for="image_file" style="margin-bottom: 10px; display: block;">' . __('Select Image (only JPG, PNG, GIF are allowed)', 'computerimages') . '</label>';
-   echo '<input type="file" class="form-control-file" name="image_file" id="image_file">';
-   echo '</div>';
+    if ($comments_supported) {
+        echo '<div class="mb-3">';
+        echo '<label for="image_comment" class="form-label">Коментар до фото</label>';
+        echo '<textarea class="form-control" name="image_comment" id="image_comment" rows="3" maxlength="2000"'
+            . ' placeholder="Наприклад: задня панель, пошкодження корпусу, розташування кабелів"></textarea>';
+        echo '<div class="form-text">Необов’язково, до 2000 символів.</div>';
+        echo '</div>';
+    } else {
+        echo '<div class="alert alert-warning">Щоб додавати коментарі, оновіть плагін у розділі «Налаштування → Плагіни».</div>';
+    }
 
-   // Button
-   echo '<div class="form-group mt-3">';
-   echo '<button type="submit" class="btn btn-warning">' . __('Upload', 'computerimages') . '</button>';
-   echo '</div>';
+    echo '<button type="submit" class="btn btn-warning">'
+        . '<i class="ti ti-upload me-1"></i>Завантажити'
+        . '</button>';
 
-   echo '</form>';
-   echo '</div>'; // .card-body
-   echo '</div>'; // .card
+    echo '</form>';
+    echo '</div>';
+    echo '</div>';
 }
 
 ?>

@@ -1,4 +1,6 @@
 <?php
+
+use Glpi\Plugin\Hooks;
 /**
  * Plugin setup file for Computer Images.
  * Adapted for GLPI 10-11.
@@ -20,7 +22,7 @@ if (!defined('GLPI_ROOT')) {
 function plugin_version_computerimages() {
     return [
         'name'           => __('Computer Images', 'computerimages'),
-        'version'        => '1.0.0',
+        'version'        => '1.1.0',
         'author'         => 'Your Name',
         'license'        => 'GPLv3',
         'homepage'       => 'https://example.com',
@@ -124,6 +126,15 @@ function plugin_init_computerimages() {
     );
 
     $PLUGIN_HOOKS['csrf_compliant']['computerimages'] = true;
+
+    // GLPI 11 renders this hook directly before the form action buttons.
+    // The generated preview remains visible there as a safe fallback; the
+    // JavaScript helper moves it into the native .asset-pictures column.
+    $PLUGIN_HOOKS[Hooks::POST_ITEM_FORM]['computerimages'] = [
+        PluginComputerimagesComputerimages::class,
+        'displayMainFormPreview',
+    ];
+    $PLUGIN_HOOKS[Hooks::ADD_JAVASCRIPT]['computerimages'][] = 'js/computerimages-preview.js';
 }
 
 /**
@@ -143,11 +154,12 @@ function plugin_computerimages_install() {
         `filesize` INT(11) NOT NULL,
         `upload_date` TIMESTAMP NOT NULL,
         `users_id_upload` INT UNSIGNED NOT NULL,
+        `comment` TEXT NULL,
         PRIMARY KEY (`id`),
         INDEX `computers_id` (`computers_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
 
-    if (!$DB->query($query)) {
+    if (!$DB->doQuery($query)) {
         Session::addMessageAfterRedirect(
             __('Failed to create table glpi_plugin_computerimages_images. DB Error: ', 'computerimages') . $DB->error(),
             false,
@@ -156,13 +168,28 @@ function plugin_computerimages_install() {
         return false;
     }
 
+    // Upgrade existing installations: add a plain-text comment field.
+    if (!$DB->fieldExists('glpi_plugin_computerimages_images', 'comment')) {
+        $alter_query = "ALTER TABLE `glpi_plugin_computerimages_images` "
+            . "ADD `comment` TEXT NULL AFTER `users_id_upload`";
+
+        if (!$DB->doQuery($alter_query)) {
+            Session::addMessageAfterRedirect(
+                __('Failed to add the image comment field. DB Error: ', 'computerimages') . $DB->error(),
+                false,
+                ERROR
+            );
+            return false;
+        }
+    }
+
     // Create pictures and thumbnails dirs
     if (!plugin_computerimages_prepare_storage_dirs()) {
         return false;
     }
 
     include_once Plugin::getPhpDir('computerimages').'/inc/profile.class.php';
-    PluginComputerimagesProfile::removeRights();
+    PluginComputerimagesProfile::initProfile();
 
     return true;
 }
@@ -227,7 +254,7 @@ function plugin_computerimages_uninstall() {
 
     // Drop table
     $query = "DROP TABLE IF EXISTS `glpi_plugin_computerimages_images`;";
-    if ($DB->query($query)) {
+    if ($DB->doQuery($query)) {
         Session::addMessageAfterRedirect(
             __('Table glpi_plugin_computerimages_images dropped successfully.', 'computerimages'),
             true,

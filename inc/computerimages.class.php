@@ -74,6 +74,40 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
     }
 
     /**
+     * Check whether the database has been upgraded for image comments.
+     * The result is cached for the current request.
+     *
+     * @return bool
+     */
+    public static function supportsImageComments() {
+        static $supported = null;
+
+        if ($supported === null) {
+            global $DB;
+            $supported = $DB->fieldExists(self::getTable(), 'comment');
+        }
+
+        return $supported;
+    }
+
+    /**
+     * Keep comments plain-text and reasonably sized.
+     *
+     * @param mixed $comment
+     *
+     * @return string
+     */
+    private static function sanitizeImageComment($comment) {
+        $comment = trim(strip_tags((string)$comment));
+
+        if (function_exists('mb_substr')) {
+            return mb_substr($comment, 0, 2000, 'UTF-8');
+        }
+
+        return substr($comment, 0, 2000);
+    }
+
+    /**
      * Rotate JPEG image according to EXIF orientation.
      *
      * @param resource|GdImage $image
@@ -230,6 +264,107 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
     }
 
     /**
+     * Display the latest computer images on the main Computer form.
+     *
+     * GLPI 11 calls POST_ITEM_FORM before the form action buttons. The block
+     * is rendered there server-side, then a small JavaScript helper places it
+     * immediately after the form action buttons. If JavaScript is unavailable,
+     * the preview remains visible immediately before the buttons.
+     *
+     * @param array $params Hook parameters containing `item` and `options`.
+     *
+     * @return void
+     */
+    public static function displayMainFormPreview($params) {
+        global $CFG_GLPI;
+
+        $item = $params['item'] ?? null;
+
+        if (!($item instanceof Computer) || $item->getID() <= 0) {
+            return;
+        }
+
+        if (
+            !Session::haveRight('computer', READ)
+            || !Session::haveRight('plugin_computerimages_profile', READ)
+        ) {
+            return;
+        }
+
+        $computer_id = (int)$item->getID();
+        $all_images = self::getImagesForComputer($computer_id);
+
+        if (count($all_images) === 0) {
+            return;
+        }
+
+        $images = array_slice($all_images, 0, 6);
+        $plugin_web_dir = Plugin::getWebDir('computerimages');
+        $all_images_url = $CFG_GLPI['root_doc']
+            . '/front/computer.form.php?id=' . $computer_id
+            . '&forcetab=PluginComputerimagesComputerimages$1';
+
+        $escape = static function($value) {
+            return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        };
+
+        // GLPI 11 renders POST_ITEM_FORM before the standard action buttons.
+        // Reorder only the last two direct children of #mainformtable with CSS,
+        // so the buttons are shown above the photo preview even if the optional
+        // JavaScript helper is not loaded or is cached by the browser.
+        echo '<style id="computerimages-main-preview-layout">'
+            . '#mainformtable:has(> #computerimages-main-preview){display:flex;flex-direction:column;}'
+            . '#mainformtable:has(> #computerimages-main-preview) > .form-button-separator{order:900;}'
+            . '#mainformtable:has(> #computerimages-main-preview) > #computerimages-main-preview{order:910;}'
+            . '</style>';
+
+        echo '<div id="computerimages-main-preview" class="card mt-3">';
+        echo '<div class="card-header d-flex align-items-center justify-content-between py-2">';
+        echo '<span class="fw-bold"><i class="ti ti-photo me-1"></i>'
+            . $escape('Фото комп’ютера') . '</span>';
+        echo '<span class="badge bg-secondary">' . count($all_images) . '</span>';
+        echo '</div>';
+        echo '<div class="card-body p-2">';
+        echo '<div class="d-flex flex-wrap gap-2">';
+
+        foreach ($images as $image) {
+            $image_id = (int)$image['id'];
+            $filename = $escape($image['filename'] ?? '');
+            $comment = trim((string)($image['comment'] ?? ''));
+            $escaped_comment = $escape($comment);
+            $original_url = $escape($plugin_web_dir . '/front/image.send.php?id=' . $image_id);
+            $thumb_url = $escape($plugin_web_dir . '/front/image.send.php?id=' . $image_id . '&thumb=1');
+            $title = $comment !== '' ? $escaped_comment : $filename;
+
+            echo '<div style="width:180px;">';
+            echo '<a href="' . $original_url . '" target="_blank" rel="noopener" title="' . $title . '">';
+            echo '<img src="' . $thumb_url . '" alt="' . $filename . '"'
+                . ' class="img-thumbnail" loading="lazy" decoding="async"'
+                . ' style="width:180px;height:180px;object-fit:cover;">';
+            echo '</a>';
+
+            if ($comment !== '') {
+                echo '<div class="small text-muted mt-1" title="' . $escaped_comment . '"'
+                    . ' style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25;">'
+                    . nl2br($escaped_comment)
+                    . '</div>';
+            }
+
+            echo '</div>';
+        }
+
+        echo '</div>';
+        echo '<div class="mt-2 text-end">';
+        echo '<a class="btn btn-sm btn-outline-secondary" href="' . $escape($all_images_url) . '">'
+            . '<i class="ti ti-photo-search me-1"></i>'
+            . $escape('Усі фото')
+            . '</a>';
+        echo '</div>';
+        echo '</div>';
+        echo '</div>';
+    }
+
+    /**
      * Get images for a specific computer.
      *
      * FIXED: Rewritten using QueryBuilder because GLPI 11 forbids direct SQL queries.
@@ -249,6 +384,7 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
                 'glpi_plugin_computerimages_images.filepath',
                 'glpi_plugin_computerimages_images.mimetype',
                 'glpi_plugin_computerimages_images.filesize',
+                ...(self::supportsImageComments() ? ['glpi_plugin_computerimages_images.comment'] : []),
                 'glpi_users.firstname AS uploader_firstname',
                 'glpi_users.realname AS uploader_realname'
             ],
@@ -271,6 +407,7 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
 
         foreach ($iterator as $row) {
             $row['uploader_name'] = trim($row['uploader_firstname'] . ' ' . $row['uploader_realname']);
+            $row['comment'] = (string)($row['comment'] ?? '');
             $images[] = $row;
         }
 
@@ -280,7 +417,7 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
     /**
      * Upload an image for a specific computer.
      */
-    public static function uploadImage($computers_id, $file_data) {
+    public static function uploadImage($computers_id, $file_data, $comment = '') {
         global $DB;
 
         if (!is_numeric($computers_id) || $computers_id <= 0) {
@@ -341,6 +478,10 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
                 'users_id_upload' => Session::getLoginUserID()
             ];
 
+            if (self::supportsImageComments()) {
+                $image->fields['comment'] = self::sanitizeImageComment($comment);
+            }
+
             if ($image->add($image->fields)) {
                 return ['success' => true, 'message' => __('Image uploaded successfully.', 'computerimages')];
             } else {
@@ -355,6 +496,52 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
         } else {
             return ['success' => false, 'message' => __('Failed to move uploaded file. Check directory permissions.', 'computerimages')];
         }
+    }
+
+    /**
+     * Update the plain-text comment assigned to an image.
+     *
+     * @param int   $image_id
+     * @param mixed $comment
+     *
+     * @return array
+     */
+    public static function updateImageComment($image_id, $comment) {
+        if (!is_numeric($image_id) || $image_id <= 0) {
+            return ['success' => false, 'message' => 'Некоректний ідентифікатор фото.'];
+        }
+
+        if (
+            !Session::haveRight('computer', UPDATE)
+            || !Session::haveRight('plugin_computerimages_profile', CREATE)
+        ) {
+            return ['success' => false, 'message' => 'Недостатньо прав для зміни коментаря.'];
+        }
+
+        if (!self::supportsImageComments()) {
+            return ['success' => false, 'message' => 'Спочатку оновіть плагін у розділі Налаштування → Плагіни.'];
+        }
+
+        $image = new self();
+        if (!$image->getFromDB((int)$image_id)) {
+            return ['success' => false, 'message' => 'Фото не знайдено.'];
+        }
+
+        $comment = self::sanitizeImageComment($comment);
+        $current_comment = (string)($image->fields['comment'] ?? '');
+
+        if ($current_comment === $comment) {
+            return ['success' => true, 'message' => 'Коментар не змінено.'];
+        }
+
+        if ($image->update([
+            'id'      => (int)$image_id,
+            'comment' => $comment,
+        ])) {
+            return ['success' => true, 'message' => 'Коментар збережено.'];
+        }
+
+        return ['success' => false, 'message' => 'Не вдалося зберегти коментар.'];
     }
 
     /**
@@ -411,7 +598,7 @@ class PluginComputerimagesComputerimages extends CommonDBTM {
         if ($item instanceof Computer) {
             return '<span class="d-flex align-items-center">
             <i class="ti ti-photo me-2"></i>'
-            . __('Images', 'computerimages') .
+            . 'Зображення' .
             '</span>';
 
            // return '<i class="ti ti-photo me-2"></i>' . __('Images', 'computerimages');
